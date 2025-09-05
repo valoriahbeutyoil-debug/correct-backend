@@ -196,7 +196,7 @@ app.post('/create-admin', async (req, res) => {
 
 // --- Product Routes ---
 const Product = require('./Product');
-const PaymentMethod = require('./models/PaymentMethod');
+const PaymentMethod = require('./PaymentMethod');
 // --- Payment Method Management ---
 // Get all payment methods
 app.get('/payment-methods', async (req, res) => {
@@ -350,4 +350,5 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
 
