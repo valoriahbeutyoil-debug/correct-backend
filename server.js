@@ -1,15 +1,28 @@
-// Get all users (for admin panel)
-app.get('/users', async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: 'Error fetching users' });
-  }
-});
-const path = require('path');
-// Multer setup for parsing multipart form data (no disk storage)
+// === Load environment variables first ===
+require('dotenv').config();
+
+// === Import dependencies ===
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const bcrypt = require('bcrypt');
 const multer = require('multer');
+const path = require('path');
+const cloudinary = require('cloudinary').v2;
+
+// === Initialize Express app ===
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+// === Configure Cloudinary ===
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// === Multer setup ===
 const upload = multer({
   storage: multer.memoryStorage(),
   fileFilter: function (req, file, cb) {
@@ -20,23 +33,6 @@ const upload = multer({
     }
   }
 });
-
-// Cloudinary setup
-const cloudinary = require('cloudinary').v2;
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bcrypt = require('bcrypt');
-
-const app = express();
-app.use(express.json());
-app.use(cors());
 
 // Health check
 app.get('/', (req, res) => {
@@ -354,3 +350,4 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
