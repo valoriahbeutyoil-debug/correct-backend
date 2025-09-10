@@ -42,6 +42,12 @@ app.get('/', (req, res) => {
 const User = require('./user');
 const CryptoAddress = require('./CryptoAddress');
 const PaymentMethod = require('./PaymentMethod');
+const Product = require('./Product');
+const Order = require('./Order');
+
+// ==========================
+// USER ROUTES
+// ==========================
 
 // Delete product by ID
 app.delete('/products/:id', async (req, res) => {
@@ -61,7 +67,6 @@ app.put('/users/admin', async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' });
     }
-    // Find admin user
     const admin = await User.findOne({ role: 'admin' });
     if (!admin) {
       return res.status(404).json({ error: 'Admin user not found' });
@@ -95,7 +100,7 @@ app.post('/users/register', async (req, res) => {
       phone,
       password: hashedPassword,
       role: 'user',
-      status: 'active' // Ensure user is active on registration
+      status: 'active'
     });
     await user.save();
     res.json({ message: 'Registration successful', user: { id: user._id, email: user.email, username: user.username } });
@@ -137,7 +142,10 @@ app.post('/users/login', async (req, res) => {
   }
 });
 
-// Get crypto addresses
+// ==========================
+// CRYPTO ADDRESS ROUTES
+// ==========================
+
 app.get('/crypto-addresses', async (req, res) => {
   try {
     let addresses = await CryptoAddress.findOne();
@@ -151,7 +159,6 @@ app.get('/crypto-addresses', async (req, res) => {
   }
 });
 
-// Update crypto addresses
 app.put('/crypto-addresses', async (req, res) => {
   try {
     const { bitcoin, ethereum, usdt } = req.body;
@@ -171,7 +178,9 @@ app.put('/crypto-addresses', async (req, res) => {
   }
 });
 
-// TEMPORARY: Create admin user route (remove after use)
+// ==========================
+// ADMIN CREATION (TEMPORARY)
+// ==========================
 app.post('/create-admin', async (req, res) => {
   try {
     const { username = 'admin', email = 'admin@example.com', password = 'admin123' } = req.body;
@@ -194,7 +203,9 @@ app.post('/create-admin', async (req, res) => {
   }
 });
 
-// === Payment Methods Routes ===
+// ==========================
+// PAYMENT METHODS ROUTES
+// ==========================
 
 // Get payment methods (always return one document)
 app.get('/payment-methods', async (req, res) => {
@@ -211,84 +222,7 @@ app.get('/payment-methods', async (req, res) => {
   }
 });
 
-// Update or create payment methods
-app.put('/payment-methods', async (req, res) => {
-  try {
-    const { bank, paypal, skype, bitcoin, ethereum, usdt } = req.body;
-    let methods = await PaymentMethod.findOne();
-
-    if (!methods) {
-      methods = new PaymentMethod({ bank, paypal, skype, bitcoin, ethereum, usdt });
-    } else {
-      methods.bank = bank || methods.bank;
-      methods.paypal = paypal || methods.paypal;
-      methods.skype = skype || methods.skype;
-      methods.bitcoin = bitcoin || methods.bitcoin;
-      methods.ethereum = ethereum || methods.ethereum;
-      methods.usdt = usdt || methods.usdt;
-    }
-
-    await methods.save();
-    res.json({ message: 'Payment methods updated', methods });
-  } catch (err) {
-    console.error('PUT /payment-methods error:', err);
-    res.status(500).json({ error: 'Error updating payment methods' });
-  }
-});
-
-// Get only active payment methods (array form)
-app.get('/payment-methods/active', async (req, res) => {
-  try {
-    const methods = await PaymentMethod.find({ active: true });
-    res.json(methods);
-  } catch (err) {
-    res.status(500).json({ error: 'Error fetching active payment methods' });
-  }
-});
-
-// Add new payment method
-app.post('/payment-methods', async (req, res) => {
-  try {
-    const { type, credentials, active } = req.body;
-    if (!type || !credentials) {
-      return res.status(400).json({ error: 'Type and credentials are required' });
-    }
-    const method = new PaymentMethod({ type, credentials, active });
-    await method.save();
-    res.json({ message: 'Payment method added', method });
-  } catch (err) {
-    res.status(500).json({ error: 'Error saving payment method' });
-  }
-});
-
-// Update payment method by ID
-app.put('/payment-methods/:id', async (req, res) => {
-  try {
-    const { type, credentials, active } = req.body;
-    const method = await PaymentMethod.findByIdAndUpdate(
-      req.params.id,
-      { type, credentials, active },
-      { new: true }
-    );
-    if (!method) return res.status(404).json({ error: 'Payment method not found' });
-    res.json({ message: 'Payment method updated', method });
-  } catch (err) {
-    res.status(500).json({ error: 'Error updating payment method' });
-  }
-});
-
-// Delete payment method
-app.delete('/payment-methods/:id', async (req, res) => {
-  try {
-    const deleted = await PaymentMethod.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ error: 'Payment method not found' });
-    res.json({ message: 'Payment method deleted' });
-  } catch (err) {
-    res.status(500).json({ error: 'Error deleting payment method' });
-  }
-});
-
-// Create or update payment methods (bank, paypal, skype, crypto)
+// ✅ Unified PUT /payment-methods (removed duplicate)
 app.put('/payment-methods', async (req, res) => {
   try {
     const { bank, paypal, skype, bitcoin, ethereum, usdt } = req.body;
@@ -365,10 +299,9 @@ app.put('/payment-methods', async (req, res) => {
   }
 });
 
-// --- Product Routes ---
-const Product = require('./Product');
-
-// Get all products
+// ==========================
+// PRODUCT ROUTES
+// ==========================
 app.get('/products', async (req, res) => {
   try {
     const category = req.query.category;
@@ -386,12 +319,10 @@ app.post('/products', upload.single('image'), async (req, res) => {
     if (!name || !category || !price || !req.file) {
       return res.status(400).json({ error: 'Missing required fields: name, category, price, image' });
     }
-    // Upload image to Cloudinary
     cloudinary.uploader.upload_stream({ resource_type: 'image' }, async (error, result) => {
       if (error || !result) {
         return res.status(500).json({ error: 'Image upload failed: ' + (error?.message || 'Unknown error') });
       }
-      // Save product to MongoDB
       const product = new Product({
         name,
         description,
@@ -411,8 +342,9 @@ app.post('/products', upload.single('image'), async (req, res) => {
 // Serve uploaded images statically
 app.use('/uploads', require('express').static(path.join(__dirname, 'uploads')));
 
-// --- Order Routes ---
-const Order = require('./Order');
+// ==========================
+// ORDER ROUTES
+// ==========================
 app.get('/orders', async (req, res) => {
   try {
     const orders = await Order.find().populate('user').populate('products.product');
@@ -444,6 +376,9 @@ app.patch('/orders/:id/cancel', async (req, res) => {
   }
 });
 
+// ==========================
+// SERVER START
+// ==========================
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGODB_URI;
 
@@ -462,4 +397,3 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
-
