@@ -1,24 +1,17 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const PaymentMethodSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    enum: ['PayPal', 'Stripe', 'Crypto', 'Bank'],
-    required: true
+const PaymentSettingsSchema = new mongoose.Schema({
+  paypalEmail: String,
+  bankDetails: {
+    accountName: String,
+    accountNumber: String,
+    bankName: String,
   },
-  credentials: {
-    // For PayPal/Stripe: API keys, for Bank: account info, for Crypto: address
-    type: mongoose.Schema.Types.Mixed,
-    required: true
+  cryptoDetails: {
+    btcAddress: String,
+    ethAddress: String,
+    usdtTrc20Address: String, // ✅ USDT (TRC20)
   },
-  active: {
-    type: Boolean,
-    default: false
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
+}, { timestamps: true });
 
-module.exports = mongoose.model('PaymentMethod', PaymentMethodSchema);
+module.exports = mongoose.model("PaymentSettings", PaymentSettingsSchema);
