@@ -1,4 +1,8 @@
-
+// Add GET /users route to return an empty array or user list
+app.get('/users', async (req, res) => {
+  // TODO: Replace with actual user fetching logic if needed
+  res.json([]);
+});
 // === Load environment variables first ===
 require('dotenv').config();
 
@@ -209,17 +213,15 @@ app.post('/create-admin', async (req, res) => {
 // ==========================
 
 // Get payment methods (always return one document)
-app.get('/payment-methods', async (req, res) => {
+// Professional GET route for all active payment methods
+app.get('/api/payment-methods', async (req, res) => {
   try {
-    let methods = await PaymentMethod.findOne();
-    if (!methods) {
-      methods = new PaymentMethod();
-      await methods.save();
-    }
+    const methods = await PaymentMethod.find({ active: true });
+    console.log('[DEBUG] GET /api/payment-methods:', methods);
     res.json(methods);
   } catch (err) {
-    console.error('GET /payment-methods error:', err);
-    res.status(500).json({ error: 'Error fetching payment methods' });
+    console.error('[ERROR] GET /api/payment-methods:', err);
+    res.status(500).json({ error: 'Failed to fetch payment methods' });
   }
 });
 
@@ -376,11 +378,7 @@ app.patch('/orders/:id/cancel', async (req, res) => {
     res.status(500).json({ error: 'Error cancelling order' });
   }
 });
-// Add GET /users route to return an empty array or user list
-app.get('/users', async (req, res) => {
-  // TODO: Replace with actual user fetching logic if needed
-  res.json([]);
-});
+
 // ==========================
 // SERVER START
 // ==========================
@@ -402,4 +400,3 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
-
