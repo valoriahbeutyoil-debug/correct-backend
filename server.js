@@ -198,15 +198,21 @@ app.post('/create-admin', async (req, res) => {
 const Product = require('./Product');
 const PaymentMethod = require('./PaymentMethod');
 // --- Payment Method Management ---
-// Get all payment methods
-app.get('/payment-methods', async (req, res) => {
-  try {
-    const methods = await PaymentMethod.find();
-    res.json(methods);
-  } catch (err) {
-    res.status(500).json({ error: 'Error fetching payment methods' });
-  }
+// Hardcoded crypto methods (BTC, ETH, USDT-TRC20)
+app.get('/payment-methods', (req, res) => {
+  res.json([
+    {
+      type: "Crypto",
+      credentials: {
+        bitcoin: "your-btc-wallet-address",
+        ethereum: "your-eth-wallet-address",
+        usdt: "your-usdt-trc20-wallet-address"
+      },
+      active: true
+    }
+  ]);
 });
+
 
 // Add a new payment method
 app.post('/payment-methods', async (req, res) => {
@@ -350,6 +356,7 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
 
 
 
