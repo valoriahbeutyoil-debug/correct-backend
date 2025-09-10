@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const PaymentSettingsSchema = new mongoose.Schema({
+const PaymentMethodSchema = new mongoose.Schema({
   paypalEmail: String,
   bankDetails: {
     accountName: String,
@@ -10,8 +10,8 @@ const PaymentSettingsSchema = new mongoose.Schema({
   cryptoDetails: {
     btcAddress: String,
     ethAddress: String,
-    usdtTrc20Address: String, // ✅ USDT (TRC20)
+    usdtTrc20Address: String,
   },
 }, { timestamps: true });
 
-module.exports = mongoose.model("PaymentSettings", PaymentSettingsSchema);
+module.exports = mongoose.model("PaymentMethod", PaymentMethodSchema);
