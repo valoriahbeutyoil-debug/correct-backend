@@ -269,6 +269,36 @@ app.get('/products', async (req, res) => {
     res.status(500).json({ error: 'Error fetching products' });
   }
 });
+// Create or update single Crypto payment method (PUT /payment-methods)
+app.put('/payment-methods', async (req, res) => {
+  try {
+    // Accept flat crypto fields from admin.js
+    const { bitcoin = '', ethereum = '', usdt = '' } = req.body;
+
+    // Keep type = 'Crypto' (capital C) so it matches your frontend checks
+    let method = await PaymentMethod.findOne({ type: 'Crypto' });
+
+    const credentials = { bitcoin, ethereum, usdt };
+
+    if (method) {
+      // Merge to avoid wiping other keys accidentally
+      method.credentials = { ...(method.credentials || {}), ...credentials };
+      method.active = true;
+    } else {
+      method = new PaymentMethod({
+        type: 'Crypto',
+        credentials,
+        active: true
+      });
+    }
+
+    await method.save();
+    res.json({ message: 'Crypto payment method saved', method });
+  } catch (err) {
+    console.error('PUT /payment-methods error:', err);
+    res.status(500).json({ error: 'Error saving crypto payment method' });
+  }
+});
 
 
 // Product upload with Cloudinary
@@ -354,5 +384,6 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
 
 
