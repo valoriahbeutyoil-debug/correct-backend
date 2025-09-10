@@ -193,18 +193,34 @@ app.post('/create-admin', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 // === Payment Methods Routes ===
 
-// Get all payment methods
+// ✅ Get all payment methods as a flat object
 app.get('/payment-methods', async (req, res) => {
   try {
-    const methods = await PaymentMethod.find();
-    res.json(methods);
+    const methods = await PaymentMethod.find({ active: true });
+    const response = {};
+
+    methods.forEach(method => {
+      if (method.type === 'Bank') response.bank = method.credentials.account;
+      if (method.type === 'PayPal') response.paypal = method.credentials.email;
+      if (method.type === 'Skype') response.skype = method.credentials.id;
+      if (method.type === 'Crypto') {
+        response.bitcoin = method.credentials.bitcoin || '';
+        response.ethereum = method.credentials.ethereum || '';
+        response.usdt = method.credentials.usdt || '';
+      }
+    });
+
+    res.json(response);
   } catch (err) {
+    console.error('GET /payment-methods error:', err);
     res.status(500).json({ error: 'Error fetching payment methods' });
   }
 });
-// Get only active payment methods
+
+// Get only active payment methods (array form)
 app.get('/payment-methods/active', async (req, res) => {
   try {
     const methods = await PaymentMethod.find({ active: true });
@@ -229,7 +245,7 @@ app.post('/payment-methods', async (req, res) => {
   }
 });
 
-// Update payment method
+// Update payment method by ID
 app.put('/payment-methods/:id', async (req, res) => {
   try {
     const { type, credentials, active } = req.body;
@@ -255,6 +271,7 @@ app.delete('/payment-methods/:id', async (req, res) => {
     res.status(500).json({ error: 'Error deleting payment method' });
   }
 });
+
 // Create or update payment methods (bank, paypal, skype, crypto)
 app.put('/payment-methods', async (req, res) => {
   try {
@@ -345,37 +362,6 @@ app.get('/products', async (req, res) => {
     res.status(500).json({ error: 'Error fetching products' });
   }
 });
-// Create or update single Crypto payment method (PUT /payment-methods)
-app.put('/payment-methods', async (req, res) => {
-  try {
-    // Accept flat crypto fields from admin.js
-    const { bitcoin = '', ethereum = '', usdt = '' } = req.body;
-
-    // Keep type = 'Crypto' (capital C) so it matches your frontend checks
-    let method = await PaymentMethod.findOne({ type: 'Crypto' });
-
-    const credentials = { bitcoin, ethereum, usdt };
-
-    if (method) {
-      // Merge to avoid wiping other keys accidentally
-      method.credentials = { ...(method.credentials || {}), ...credentials };
-      method.active = true;
-    } else {
-      method = new PaymentMethod({
-        type: 'Crypto',
-        credentials,
-        active: true
-      });
-    }
-
-    await method.save();
-    res.json({ message: 'Crypto payment method saved', method });
-  } catch (err) {
-    console.error('PUT /payment-methods error:', err);
-    res.status(500).json({ error: 'Error saving crypto payment method' });
-  }
-});
-
 
 // Product upload with Cloudinary
 app.post('/products', upload.single('image'), async (req, res) => {
@@ -460,7 +446,3 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
-
-
-
-
