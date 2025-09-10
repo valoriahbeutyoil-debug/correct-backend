@@ -196,27 +196,43 @@ app.post('/create-admin', async (req, res) => {
 
 // === Payment Methods Routes ===
 
-// ✅ Get all payment methods as a flat object
+// Get payment methods (always return one document)
 app.get('/payment-methods', async (req, res) => {
   try {
-    const methods = await PaymentMethod.find({ active: true });
-    const response = {};
-
-    methods.forEach(method => {
-      if (method.type === 'Bank') response.bank = method.credentials.account;
-      if (method.type === 'PayPal') response.paypal = method.credentials.email;
-      if (method.type === 'Skype') response.skype = method.credentials.id;
-      if (method.type === 'Crypto') {
-        response.bitcoin = method.credentials.bitcoin || '';
-        response.ethereum = method.credentials.ethereum || '';
-        response.usdt = method.credentials.usdt || '';
-      }
-    });
-
-    res.json(response);
+    let methods = await PaymentMethod.findOne();
+    if (!methods) {
+      methods = new PaymentMethod();
+      await methods.save();
+    }
+    res.json(methods);
   } catch (err) {
     console.error('GET /payment-methods error:', err);
     res.status(500).json({ error: 'Error fetching payment methods' });
+  }
+});
+
+// Update or create payment methods
+app.put('/payment-methods', async (req, res) => {
+  try {
+    const { bank, paypal, skype, bitcoin, ethereum, usdt } = req.body;
+    let methods = await PaymentMethod.findOne();
+
+    if (!methods) {
+      methods = new PaymentMethod({ bank, paypal, skype, bitcoin, ethereum, usdt });
+    } else {
+      methods.bank = bank || methods.bank;
+      methods.paypal = paypal || methods.paypal;
+      methods.skype = skype || methods.skype;
+      methods.bitcoin = bitcoin || methods.bitcoin;
+      methods.ethereum = ethereum || methods.ethereum;
+      methods.usdt = usdt || methods.usdt;
+    }
+
+    await methods.save();
+    res.json({ message: 'Payment methods updated', methods });
+  } catch (err) {
+    console.error('PUT /payment-methods error:', err);
+    res.status(500).json({ error: 'Error updating payment methods' });
   }
 });
 
@@ -446,3 +462,4 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
