@@ -204,6 +204,15 @@ app.get('/payment-methods', async (req, res) => {
     res.status(500).json({ error: 'Error fetching payment methods' });
   }
 });
+// Get only active payment methods
+app.get('/payment-methods/active', async (req, res) => {
+  try {
+    const methods = await PaymentMethod.find({ active: true });
+    res.json(methods);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching active payment methods' });
+  }
+});
 
 // Add new payment method
 app.post('/payment-methods', async (req, res) => {
@@ -260,6 +269,7 @@ app.get('/products', async (req, res) => {
     res.status(500).json({ error: 'Error fetching products' });
   }
 });
+
 
 // Product upload with Cloudinary
 app.post('/products', upload.single('image'), async (req, res) => {
@@ -344,4 +354,5 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
 
