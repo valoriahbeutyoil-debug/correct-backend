@@ -255,6 +255,82 @@ app.delete('/payment-methods/:id', async (req, res) => {
     res.status(500).json({ error: 'Error deleting payment method' });
   }
 });
+// Create or update payment methods (bank, paypal, skype, crypto)
+app.put('/payment-methods', async (req, res) => {
+  try {
+    const { bank, paypal, skype, bitcoin, ethereum, usdt } = req.body;
+
+    // --- Handle Bank ---
+    if (bank) {
+      let bankMethod = await PaymentMethod.findOne({ type: 'Bank' });
+      if (bankMethod) {
+        bankMethod.credentials = { account: bank };
+        bankMethod.active = true;
+        await bankMethod.save();
+      } else {
+        await PaymentMethod.create({
+          type: 'Bank',
+          credentials: { account: bank },
+          active: true
+        });
+      }
+    }
+
+    // --- Handle PayPal ---
+    if (paypal) {
+      let paypalMethod = await PaymentMethod.findOne({ type: 'PayPal' });
+      if (paypalMethod) {
+        paypalMethod.credentials = { email: paypal };
+        paypalMethod.active = true;
+        await paypalMethod.save();
+      } else {
+        await PaymentMethod.create({
+          type: 'PayPal',
+          credentials: { email: paypal },
+          active: true
+        });
+      }
+    }
+
+    // --- Handle Skype ---
+    if (skype) {
+      let skypeMethod = await PaymentMethod.findOne({ type: 'Skype' });
+      if (skypeMethod) {
+        skypeMethod.credentials = { id: skype };
+        skypeMethod.active = true;
+        await skypeMethod.save();
+      } else {
+        await PaymentMethod.create({
+          type: 'Skype',
+          credentials: { id: skype },
+          active: true
+        });
+      }
+    }
+
+    // --- Handle Crypto ---
+    if (bitcoin || ethereum || usdt) {
+      let cryptoMethod = await PaymentMethod.findOne({ type: 'Crypto' });
+      const credentials = { bitcoin, ethereum, usdt };
+      if (cryptoMethod) {
+        cryptoMethod.credentials = { ...(cryptoMethod.credentials || {}), ...credentials };
+        cryptoMethod.active = true;
+        await cryptoMethod.save();
+      } else {
+        await PaymentMethod.create({
+          type: 'Crypto',
+          credentials,
+          active: true
+        });
+      }
+    }
+
+    res.json({ message: 'Payment methods saved/updated successfully' });
+  } catch (err) {
+    console.error('PUT /payment-methods error:', err);
+    res.status(500).json({ error: 'Error saving payment methods' });
+  }
+});
 
 // --- Product Routes ---
 const Product = require('./Product');
@@ -384,6 +460,7 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
 
 
 
