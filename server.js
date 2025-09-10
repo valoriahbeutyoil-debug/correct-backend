@@ -41,6 +41,7 @@ app.get('/', (req, res) => {
 
 const User = require('./user');
 const CryptoAddress = require('./CryptoAddress');
+const PaymentMethod = require('./PaymentMethod');
 
 // Delete product by ID
 app.delete('/products/:id', async (req, res) => {
@@ -192,6 +193,59 @@ app.post('/create-admin', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+// === Payment Methods Routes ===
+
+// Get all payment methods
+app.get('/payment-methods', async (req, res) => {
+  try {
+    const methods = await PaymentMethod.find();
+    res.json(methods);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching payment methods' });
+  }
+});
+
+// Add new payment method
+app.post('/payment-methods', async (req, res) => {
+  try {
+    const { type, credentials, active } = req.body;
+    if (!type || !credentials) {
+      return res.status(400).json({ error: 'Type and credentials are required' });
+    }
+    const method = new PaymentMethod({ type, credentials, active });
+    await method.save();
+    res.json({ message: 'Payment method added', method });
+  } catch (err) {
+    res.status(500).json({ error: 'Error saving payment method' });
+  }
+});
+
+// Update payment method
+app.put('/payment-methods/:id', async (req, res) => {
+  try {
+    const { type, credentials, active } = req.body;
+    const method = await PaymentMethod.findByIdAndUpdate(
+      req.params.id,
+      { type, credentials, active },
+      { new: true }
+    );
+    if (!method) return res.status(404).json({ error: 'Payment method not found' });
+    res.json({ message: 'Payment method updated', method });
+  } catch (err) {
+    res.status(500).json({ error: 'Error updating payment method' });
+  }
+});
+
+// Delete payment method
+app.delete('/payment-methods/:id', async (req, res) => {
+  try {
+    const deleted = await PaymentMethod.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Payment method not found' });
+    res.json({ message: 'Payment method deleted' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error deleting payment method' });
+  }
+});
 
 // --- Product Routes ---
 const Product = require('./Product');
@@ -290,3 +344,4 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
