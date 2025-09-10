@@ -1,3 +1,8 @@
+// Add GET /users route to return an empty array or user list
+app.get('/users', async (req, res) => {
+  // TODO: Replace with actual user fetching logic if needed
+  res.json([]);
+});
 // === Load environment variables first ===
 require('dotenv').config();
 
