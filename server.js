@@ -193,77 +193,10 @@ app.post('/create-admin', async (req, res) => {
   }
 });
 
-
 // --- Product Routes ---
 const Product = require('./Product');
-const PaymentMethod = require('./PaymentMethod');
-// --- Payment Method Management ---
-// Hardcoded crypto methods (BTC, ETH, USDT-TRC20)
-app.get('/payment-methods', (req, res) => {
-  res.json([
-    {
-      type: "Crypto",
-      credentials: {
-        bitcoin: "your-btc-wallet-address",
-        ethereum: "your-eth-wallet-address",
-        usdt: "your-usdt-trc20-wallet-address"
-      },
-      active: true
-    }
-  ]);
-});
 
-
-// Add a new payment method
-app.post('/payment-methods', async (req, res) => {
-  try {
-    const { type, credentials, active } = req.body;
-    if (!type || !credentials) {
-      return res.status(400).json({ error: 'Type and credentials are required' });
-    }
-    // If setting active, deactivate others of same type
-    if (active) {
-      await PaymentMethod.updateMany({ type }, { $set: { active: false } });
-    }
-    const method = new PaymentMethod({ type, credentials, active: !!active });
-    await method.save();
-    res.json({ message: 'Payment method added', method });
-  } catch (err) {
-    res.status(500).json({ error: 'Error adding payment method' });
-  }
-});
-
-// Update a payment method
-app.put('/payment-methods/:id', async (req, res) => {
-  try {
-    const { type, credentials, active } = req.body;
-    const method = await PaymentMethod.findById(req.params.id);
-    if (!method) return res.status(404).json({ error: 'Payment method not found' });
-    if (type) method.type = type;
-    if (credentials) method.credentials = credentials;
-    if (typeof active === 'boolean') {
-      if (active) {
-        await PaymentMethod.updateMany({ type: method.type }, { $set: { active: false } });
-      }
-      method.active = active;
-    }
-    await method.save();
-    res.json({ message: 'Payment method updated', method });
-  } catch (err) {
-    res.status(500).json({ error: 'Error updating payment method' });
-  }
-});
-
-// Delete a payment method
-app.delete('/payment-methods/:id', async (req, res) => {
-  try {
-    const method = await PaymentMethod.findByIdAndDelete(req.params.id);
-    if (!method) return res.status(404).json({ error: 'Payment method not found' });
-    res.json({ message: 'Payment method deleted' });
-  } catch (err) {
-    res.status(500).json({ error: 'Error deleting payment method' });
-  }
-});
+// Get all products
 app.get('/products', async (req, res) => {
   try {
     const category = req.query.category;
@@ -302,6 +235,7 @@ app.post('/products', upload.single('image'), async (req, res) => {
     return res.status(500).json({ error: 'Server error: ' + err.message });
   }
 });
+
 // Serve uploaded images statically
 app.use('/uploads', require('express').static(path.join(__dirname, 'uploads')));
 
@@ -356,9 +290,3 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
-
-
-
-
-
-
