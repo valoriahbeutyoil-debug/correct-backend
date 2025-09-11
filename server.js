@@ -426,6 +426,20 @@ app.get('/users', async (req, res) => {
   // TODO: Replace with actual user fetching logic if needed
   res.json([]);
 });
+// Hard delete order
+app.delete('/orders/:id', async (req, res) => {
+  try {
+    const deletedOrder = await Order.findByIdAndDelete(req.params.id);
+    if (!deletedOrder) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    res.json({ message: 'Order deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting order:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // ==========================
 // SERVER START
 // ==========================
@@ -447,6 +461,7 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
 
 
 
