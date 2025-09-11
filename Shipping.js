@@ -1,8 +1,9 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const shippingSchema = new mongoose.Schema({
-  discreet: { type: Number, default: 30.00 },
-  express: { type: Number, default: 50.00 }
-});
+const ShippingSchema = new mongoose.Schema({
+  method: { type: String, default: "Standard Shipping" },
+  cost: { type: Number, default: 0 },
+  estimatedDelivery: { type: String, default: "3-5 business days" }
+}, { timestamps: true });
 
-module.exports = mongoose.model('Shipping', shippingSchema);
+module.exports = mongoose.model("Shipping", ShippingSchema);
