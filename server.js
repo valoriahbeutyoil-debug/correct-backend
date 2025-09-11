@@ -221,7 +221,7 @@ app.get('/api/payment-methods', async (req, res) => {
 });
 
 // ✅ Unified PUT /payment-methods (removed duplicate)
-app.put('/payment-methods', async (req, res) => {
+app.put('/api/payment-methods', async (req, res) => {
   try {
     const { bank, paypal, skype, bitcoin, ethereum, usdt } = req.body;
 
@@ -399,4 +399,5 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
 
