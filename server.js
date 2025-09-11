@@ -44,6 +44,8 @@ const CryptoAddress = require('./CryptoAddress');
 const PaymentMethod = require('./PaymentMethod');
 const Product = require('./Product');
 const Order = require('./Order');
+const Shipping = require("./shipping");
+
 
 // ==========================
 // USER ROUTES
@@ -439,6 +441,38 @@ app.delete('/orders/:id', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+// === Shipping Settings Routes ===
+
+// Get current shipping settings
+app.get("/api/shipping", async (req, res) => {
+  try {
+    let settings = await Shipping.findOne();
+    if (!settings) {
+      settings = new Shipping();
+      await settings.save();
+    }
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update shipping settings
+app.put("/api/shipping", async (req, res) => {
+  try {
+    let settings = await Shipping.findOne();
+    if (!settings) {
+      settings = new Shipping();
+    }
+    settings.method = req.body.method;
+    settings.cost = req.body.cost;
+    settings.estimatedDelivery = req.body.estimatedDelivery;
+    await settings.save();
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ==========================
 // SERVER START
@@ -461,6 +495,7 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
 
 
 
