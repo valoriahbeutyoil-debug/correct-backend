@@ -1,3 +1,8 @@
+// Add GET /users route to return an empty array or user list
+app.get('/users', async (req, res) => {
+  // TODO: Replace with actual user fetching logic if needed
+  res.json([]);
+});
 // === Load environment variables first ===
 require('dotenv').config();
 
@@ -373,11 +378,6 @@ app.patch('/orders/:id/cancel', async (req, res) => {
     res.status(500).json({ error: 'Error cancelling order' });
   }
 });
-// Add GET /users route to return an empty array or user list
-app.get('/users', async (req, res) => {
-  // TODO: Replace with actual user fetching logic if needed
-  res.json([]);
-});
 
 // ==========================
 // SERVER START
@@ -400,4 +400,3 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
-
