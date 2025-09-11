@@ -345,9 +345,26 @@ app.use('/uploads', require('express').static(path.join(__dirname, 'uploads')));
 // ==========================
 app.get('/orders', async (req, res) => {
   try {
-    const orders = await Order.find().populate('user').populate('products.product');
-    res.json(orders);
+    const orders = await Order.find()
+      .populate('user', 'username email') // only return safe user fields
+      .populate('products.product', 'name price'); // only return name & price
+
+    // 🔹 Ensure fallback if product was deleted
+    const formattedOrders = orders.map(order => ({
+      ...order.toObject(),
+      products: order.products.map(p => ({
+        product: p.product ? p.product._id : null,
+        quantity: p.quantity,
+        snapshot: p.snapshot || {
+          name: p.product ? p.product.name : "Unknown (deleted)",
+          price: p.product ? p.product.price : 0
+        }
+      }))
+    }));
+
+    res.json(formattedOrders);
   } catch (err) {
+    console.error("Error fetching orders:", err);
     res.status(500).json({ error: 'Error fetching orders' });
   }
 });
@@ -430,6 +447,7 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
 
 
 
