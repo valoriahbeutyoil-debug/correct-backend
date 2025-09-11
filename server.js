@@ -44,7 +44,7 @@ const CryptoAddress = require('./CryptoAddress');
 const PaymentMethod = require('./PaymentMethod');
 const Product = require('./Product');
 const Order = require('./Order');
-const Shipping = require("./shipping");
+const Shipping = require("./Shipping");
 
 
 // ==========================
@@ -495,6 +495,7 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
 
 
 
