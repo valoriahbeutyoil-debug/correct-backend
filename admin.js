@@ -356,48 +356,55 @@ class AdminPanel {
         }
     }
 
-    loadOrders() {
-        // Sample orders - in real app, this would come from database
-        this.orders = [
-            {
-                id: 'ORD-001',
-                customer: 'john_doe',
-                products: ['Grade A Passports', 'Premium Clone Card'],
-                total: 2750,
-                status: 'completed',
-                date: '2024-01-15'
-            },
-            {
-                id: 'ORD-002',
-                customer: 'jane_smith',
-                products: ['US Dollar Bills'],
-                total: 200,
-                status: 'pending',
-                date: '2024-01-14'
-            }
-        ];
-
+   async loadOrders() {
+    try {
+        const res = await fetch('https://correct-backend-gu05.onrender.com/orders');
+        if (!res.ok) throw new Error('Failed to load orders');
+        this.orders = await res.json();
+        this.renderOrders();
+    } catch (err) {
+        console.error('Error loading orders:', err);
+        this.orders = [];
         this.renderOrders();
     }
+}
 
-    renderOrders() {
-        const tbody = document.getElementById('orders-tbody');
-        tbody.innerHTML = this.orders.map(order => `
+renderOrders() {
+    const tbody = document.getElementById('orders-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = this.orders.map(order => {
+        const customerName = order.billingInfo?.name || 'N/A';
+        const products = (order.products || []).map(p => {
+            if (p.productSnapshot) {
+                return `${p.productSnapshot.name} ($${p.productSnapshot.price}) x${p.quantity}`;
+            }
+            if (p.product) {
+                return `${p.product.name} ($${p.product.price}) x${p.quantity}`;
+            }
+            return 'N/A';
+        }).join(', ');
+
+        const total = order.total ? `$${order.total.toFixed(2)}` : '$0.00';
+        const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A';
+
+        return `
             <tr>
-                <td>${order.id}</td>
-                <td>${order.customer}</td>
-                <td>${order.products.join(', ')}</td>
-                <td>$${order.total.toFixed(2)}</td>
+                <td>${order._id}</td>
+                <td>${customerName}</td>
+                <td>${products}</td>
+                <td>${total}</td>
                 <td><span class="status-badge ${order.status}">${order.status}</span></td>
-                <td>${order.date}</td>
+                <td>${date}</td>
                 <td>
-                    <button class="btn btn-secondary" onclick="adminPanel.viewOrder('${order.id}')">
+                    <button class="btn btn-secondary" onclick="adminPanel.viewOrder('${order._id}')">
                         <i class="fas fa-eye"></i>
                     </button>
                 </td>
             </tr>
-        `).join('');
-    }
+        `;
+    }).join('');
+}
 
     viewOrder(id) {
         const order = this.orders.find(o => o.id === id);
@@ -600,3 +607,4 @@ const notificationStyles = `
 const styleSheet = document.createElement('style');
 styleSheet.textContent = notificationStyles;
 document.head.appendChild(styleSheet);
+
