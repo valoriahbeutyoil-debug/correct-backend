@@ -354,12 +354,43 @@ app.get('/orders', async (req, res) => {
 
 app.post('/orders', async (req, res) => {
   try {
-    const { user, products, total, billingInfo, paymentAddresses } = req.body;
-    const order = new Order({ user, products, total, billingInfo, paymentAddresses });
+    const { user, products, total, billingInfo, paymentAddresses, paymentMethod } = req.body;
+
+    // 🔹 Ensure billingInfo.name is set (combine firstname + lastname if available)
+    if (!billingInfo.name && billingInfo.firstname && billingInfo.lastname) {
+      billingInfo.name = `${billingInfo.firstname} ${billingInfo.lastname}`;
+    }
+
+    // 🔹 Add product snapshots (name + price at order time)
+    const populatedProducts = await Promise.all(
+      products.map(async (p) => {
+        const prod = await Product.findById(p.product);
+        return {
+          product: p.product,
+          quantity: p.quantity,
+          snapshot: {
+            name: prod ? prod.name : "Unknown",
+            price: prod ? prod.price : 0
+          }
+        };
+      })
+    );
+
+    // 🔹 Save order with snapshots + billing info
+    const order = new Order({
+      user,
+      products: populatedProducts,
+      total,
+      billingInfo,
+      paymentAddresses,
+      paymentMethod
+    });
+
     await order.save();
-    res.json({ message: 'Order placed', order });
+    res.json({ message: "✅ Order placed successfully", order });
   } catch (err) {
-    res.status(500).json({ error: 'Error placing order' });
+    console.error("Error placing order:", err);
+    res.status(500).json({ error: "Error placing order" });
   }
 });
 
@@ -399,5 +430,6 @@ mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
 
 
